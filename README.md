@@ -13,7 +13,7 @@
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![PostgreSQL + pgvector](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 
-[Quick Start](#-quick-start-docker) · [Features](#-features) · [AI Setup](#-enabling-ai-features-optional) · [Architecture](#-architecture) · [Local Dev](#-local-development) · [Contributing](CONTRIBUTING.md)
+[Preview](#-preview) · [Quick Start](#-quick-start-docker) · [Features](#-features) · [AI Setup](#-enabling-ai-features-optional) · [Architecture](#-architecture) · [Local Dev](#-local-development) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -22,6 +22,39 @@
 Refly is an open-source hobby project built to bring paper management, PDF reading, Markdown + KaTeX research notes, citation formatting, and grounded RAG AI chat into one calm, local-first workspace.
 
 Everything runs on your own machine via Docker Compose — **no cloud accounts, no subscriptions, and no paywalls**. Your papers, PDFs, notes, and vector embeddings stay in your local Docker volumes, and AI keys are completely optional.
+
+---
+
+## Preview
+
+<div align="center">
+  <img src="docs/assets/demo.gif" alt="Refly interactive walkthrough — paper library, Markdown + KaTeX notes, citations, grounded AI chat, and dark mode" width="100%" />
+</div>
+
+<br />
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/library.png" alt="Refly Library View" />
+      <p align="center"><sub><b>Paper Library</b> — nested folders, tags, teams, and local PDFs</sub></p>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/paper-notes.png" alt="Refly Paper Notes with KaTeX Math" />
+      <p align="center"><sub><b>Paper Details &amp; Notes</b> — Markdown with KaTeX math &amp; citations</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/ai-chat.png" alt="Refly Grounded AI Chat" />
+      <p align="center"><sub><b>Grounded AI Chat (RAG)</b> — inline <code>[S#]</code> citations over your library</sub></p>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/dark-mode.png" alt="Refly Dark Mode" />
+      <p align="center"><sub><b>Dark Mode &amp; Themes</b> — Light/Dark/System + 8 accent themes</sub></p>
+    </td>
+  </tr>
+</table>
 
 ---
 
