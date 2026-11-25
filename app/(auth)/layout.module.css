@@ -1,0 +1,64 @@
+.illustrationFloat1,
+.illustrationFloat2,
+.illustrationFloat3 {
+  animation-duration: 7s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.illustrationFloat1 {
+  animation-name: floatA;
+  animation-delay: 0.2s;
+}
+
+.illustrationFloat2 {
+  animation-name: floatB;
+  animation-delay: 0.8s;
+}
+
+.illustrationFloat3 {
+  animation-name: floatC;
+  animation-delay: 1.4s;
+}
+
+@keyframes floatA {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes floatB {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes floatC {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illustrationFloat1,
+  .illustrationFloat2,
+  .illustrationFloat3 {
+    animation: none;
+  }
+}

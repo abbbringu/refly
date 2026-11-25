@@ -1,0 +1,42 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="1600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A" />
+      <stop offset="1" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="blobA" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#38BDF8" stop-opacity="0.65" />
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0.18" />
+    </linearGradient>
+    <linearGradient id="blobB" x1="1" y1="0" x2="0" y2="1">
+      <stop stop-color="#F59E0B" stop-opacity="0.44" />
+      <stop offset="1" stop-color="#F97316" stop-opacity="0.14" />
+    </linearGradient>
+    <filter id="blur" x="-200" y="-200" width="1600" height="2000" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="90" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="1600" fill="url(#bg)" />
+
+  <g filter="url(#blur)">
+    <ellipse cx="290" cy="340" rx="330" ry="220" fill="url(#blobA)" />
+    <ellipse cx="860" cy="1050" rx="390" ry="280" fill="url(#blobB)" />
+    <ellipse cx="1050" cy="260" rx="250" ry="180" fill="#818CF8" fill-opacity="0.27" />
+  </g>
+
+  <g opacity="0.22">
+    <path d="M120 250H1080" stroke="white" stroke-width="2" />
+    <path d="M120 430H1080" stroke="white" stroke-width="2" />
+    <path d="M120 610H1080" stroke="white" stroke-width="2" />
+    <path d="M120 790H1080" stroke="white" stroke-width="2" />
+    <path d="M120 970H1080" stroke="white" stroke-width="2" />
+    <path d="M120 1150H1080" stroke="white" stroke-width="2" />
+    <path d="M120 1330H1080" stroke="white" stroke-width="2" />
+    <path d="M250 140V1460" stroke="white" stroke-width="2" />
+    <path d="M430 140V1460" stroke="white" stroke-width="2" />
+    <path d="M610 140V1460" stroke="white" stroke-width="2" />
+    <path d="M790 140V1460" stroke="white" stroke-width="2" />
+    <path d="M970 140V1460" stroke="white" stroke-width="2" />
+  </g>
+</svg>

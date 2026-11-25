@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     description:
       "Start free, grow with Plus, or power up with Pro. Choose the Refly plan that fits your research needs.",
     url: "https://refly.ai/pricing",
-    images: [{ url: "https://refly.ai/og.png", width: 1200, height: 630, alt: "Refly Pricing" }],
+
   },
 }
 
@@ -53,15 +53,15 @@ const comparison = [
   },
   {
     feature: "AI usage",
-    info: "Monthly AI credit included per user — Plus gets $2, Pro gets $7 (≈3.5× Plus).",
+    info: "Monthly AI credit included per user — Plus gets €2, Pro gets €7 (≈3.5× Plus).",
     free: "None",
-    plus: "Standard ($2/mo)",
-    pro: "High (~3.5× Plus, $7/mo)",
+    plus: "Standard (€2/mo)",
+    pro: "High (~3.5× Plus, €7/mo)",
   },
   {
     feature: "Document capacity",
     info: "Approximate total documents you can keep indexed in your workspace.",
-    free: "~50",
+    free: "~85",
     plus: "~1,200",
     pro: "~3,700",
   },
@@ -236,9 +236,6 @@ export default function PricingPage() {
         <div className="flex flex-wrap items-center gap-4">
           <Link href="/changelog" className="hover:text-foreground hover:underline">
             Changelog
-          </Link>
-          <Link href="/security" className="hover:text-foreground hover:underline">
-            Security
           </Link>
           <Link href="/legal" className="hover:text-foreground hover:underline">
             Legal

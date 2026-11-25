@@ -1,9 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, Check, Leaf, ShieldCheck, Sparkles, X } from "lucide-react"
-import { createClient } from "@/utils/supabase/client"
-import type { BillingPlan } from "@/lib/storage/quota"
+import { Check, Leaf, ShieldCheck, Sparkles } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -13,11 +11,16 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PlanCtaButton } from "@/components/billing/plan-cta-button"
+import { cn } from "@/lib/utils"
+import { useBilling } from "@/hooks/use-billing"
+import type { BillingPlan } from "@/lib/storage/quota"
+
+type StripePlanDisplay = Partial<Record<BillingPlan, { price: string; cadence: string }>>
 
 const plans = [
   {
     name: "Free",
-    price: "$0",
+    price: "€0",
     cadence: "forever",
     subcopy: "Perfect for getting started and proving value in minutes.",
     storage: "350 MB storage",
@@ -29,7 +32,7 @@ const plans = [
     icon: Sparkles,
     features: [
       "Personal workspace for one researcher",
-      "~50 PDFs, notes, or source files",
+      "~85 documents, notes, or source files",
       "No AI features",
       "No team features",
       "Community support",
@@ -37,7 +40,7 @@ const plans = [
   },
   {
     name: "Plus",
-    price: "EUR 5",
+    price: "€5",
     cadence: "per user / month",
     subcopy: "Your AI research assistant — search, summarize, and draft with confidence.",
     storage: "5 GB storage",
@@ -62,7 +65,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "EUR 15",
+    price: "€15",
     cadence: "per user / month",
     subcopy: "For power users who run on AI — with over 3× the capacity of Plus.",
     storage: "15 GB storage",
@@ -88,50 +91,37 @@ const plans = [
 ]
 
 export function PricingCards() {
-  const [currentPlan, setCurrentPlan] = useState<BillingPlan | null>(null)
+  const { plan: currentPlan, profile } = useBilling()
+  const [stripePlans, setStripePlans] = useState<StripePlanDisplay>({})
 
   useEffect(() => {
-    const fetchPlan = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        setCurrentPlan(null)
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("plan")
-        .eq("id", user.id)
-        .single()
-
-      if (profile?.plan === "plus" || profile?.plan === "pro") {
-        setCurrentPlan(profile.plan)
-      } else {
-        setCurrentPlan("free")
-      }
-    }
-
-    fetchPlan()
+    fetch("/api/billing/plans")
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => setStripePlans(payload?.plans ?? {}))
+      .catch(() => setStripePlans({}))
   }, [])
 
   return (
     <section className="mx-auto mt-12 grid w-full max-w-6xl gap-6 px-6 lg:grid-cols-3">
       {plans.map((plan) => {
-        const Icon = plan.icon
-        const isCurrentPlan = currentPlan === plan.plan
+          const Icon = plan.icon
+          const isCurrentPlan = profile ? currentPlan === plan.plan : false
+          const display = stripePlans[plan.plan]
+          const cta = profile && plan.plan === "pro" && currentPlan === "plus"
+            ? "Upgrade to Pro"
+            : profile && plan.plan === "plus" && currentPlan === "pro"
+              ? "Downgrade to Plus"
+              : plan.cta
 
         return (
           <Card
             key={plan.name}
-            className={
+            className={cn(
+              "flex flex-col",
               plan.featured
                 ? "border-primary/55 bg-card shadow-xl ring-1 ring-primary/25"
                 : "border-border/80 bg-card shadow-sm"
-            }
+            )}
           >
             <CardHeader className="space-y-4">
               <div className="flex items-center justify-between">
@@ -146,19 +136,17 @@ export function PricingCards() {
                 ) : null}
               </div>
               <div>
-                <p className="text-4xl font-semibold tracking-tight">{plan.price}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{plan.cadence}</p>
+                <p className="text-4xl font-semibold tracking-tight">{display?.price ?? plan.price}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{display?.cadence ?? plan.cadence}</p>
               </div>
               <CardDescription className="text-sm leading-relaxed">{plan.subcopy}</CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-5">
-              <p className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-medium text-foreground">
-                {plan.storage}
-              </p>
-              <p className="rounded-md border border-border bg-muted/35 px-3 py-2 text-sm font-medium text-foreground">
-                {plan.documents}
-              </p>
+            <CardContent className="flex flex-1 flex-col space-y-5">
+              <div className="flex items-center justify-between rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-medium text-foreground">
+                <span>{plan.storage}</span>
+                <span className="text-muted-foreground">{plan.documents}</span>
+              </div>
               <p className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-foreground">
                 {plan.aiCredit}
               </p>
@@ -185,12 +173,14 @@ export function PricingCards() {
                   </ul>
                 </div>
               ) : null}
+              <div className="mt-auto">
               <PlanCtaButton
                 plan={plan.plan}
-                cta={plan.cta}
+                cta={cta}
                 featured={plan.featured}
                 isCurrentPlan={isCurrentPlan}
               />
+              </div>
             </CardContent>
           </Card>
         )

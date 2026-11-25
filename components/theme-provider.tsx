@@ -1,71 +1,86 @@
 "use client"
 
 import * as React from "react"
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+
+export const ACCENT_THEMES = [
+  "blue",
+  "emerald",
+  "amber",
+  "rose",
+  "cyan",
+  "violet",
+  "lime",
+  "coral",
+] as const
+
+export type AccentTheme = (typeof ACCENT_THEMES)[number]
+
+const ACCENT_THEME_STORAGE_KEY = "refly-accent-theme"
+
+type AccentThemeContextValue = {
+  accentTheme: AccentTheme
+  setAccentTheme: (theme: AccentTheme) => void
+}
+
+const AccentThemeContext = React.createContext<AccentThemeContextValue | undefined>(undefined)
+
+function applyAccentTheme(theme: AccentTheme) {
+  document.documentElement.setAttribute("data-accent-theme", theme)
+}
 
 function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
+  const [accentTheme, setAccentThemeState] = React.useState<AccentTheme>("blue")
+
+  React.useEffect(() => {
+    const storedTheme = window.localStorage.getItem(ACCENT_THEME_STORAGE_KEY)
+    if (storedTheme && ACCENT_THEMES.includes(storedTheme as AccentTheme)) {
+      const parsedTheme = storedTheme as AccentTheme
+      setAccentThemeState(parsedTheme)
+      applyAccentTheme(parsedTheme)
+      return
+    }
+
+    applyAccentTheme("blue")
+  }, [])
+
+  const setAccentTheme = React.useCallback((theme: AccentTheme) => {
+    setAccentThemeState(theme)
+    applyAccentTheme(theme)
+    window.localStorage.setItem(ACCENT_THEME_STORAGE_KEY, theme)
+  }, [])
+
+  const value = React.useMemo(
+    () => ({ accentTheme, setAccentTheme }),
+    [accentTheme, setAccentTheme]
+  )
+
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="light"
       enableSystem
       disableTransitionOnChange
       {...props}
     >
-      <ThemeHotkey />
-      {children}
+      <AccentThemeContext.Provider value={value}>
+        {children}
+      </AccentThemeContext.Provider>
     </NextThemesProvider>
   )
 }
 
-function isTypingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
+function useAccentTheme() {
+  const context = React.useContext(AccentThemeContext)
+
+  if (!context) {
+    throw new Error("useAccentTheme must be used within ThemeProvider")
   }
 
-  return (
-    target.isContentEditable ||
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT"
-  )
+  return context
 }
 
-function ThemeHotkey() {
-  const { resolvedTheme, setTheme } = useTheme()
-
-  React.useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.repeat) {
-        return
-      }
-
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return
-      }
-
-      if (event.key.toLowerCase() !== "d") {
-        return
-      }
-
-      if (isTypingTarget(event.target)) {
-        return
-      }
-
-      setTheme(resolvedTheme === "dark" ? "light" : "dark")
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown)
-    }
-  }, [resolvedTheme, setTheme])
-
-  return null
-}
-
-export { ThemeProvider }
+export { ThemeProvider, useAccentTheme }
