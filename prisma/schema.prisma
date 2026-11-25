@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TeamRole {
+  owner
+  admin
+  editor
+  viewer
+
+  @@map("team_role")
+}
+
+model Profile {
+  id            String       @id @db.Uuid
+  email         String
+  full_name     String?
+  avatar_url    String?
+  plan          String       @default("free")
+  stripe_customer_id String?
+  stripe_subscription_id String?
+  billing_status String?
+  plan_renewal_at DateTime? @db.Timestamptz(6)
+  cancel_at_period_end Boolean @default(false)
+  billing_grace_until DateTime? @db.Timestamptz(6)
+  paper_summary_model String?
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime     @default(now()) @db.Timestamptz(6)
+  folders       Folder[]
+  notes         Note[]
+  papers        Paper[]
+  tags          Tag[]
+  team_members  TeamMember[]
+  team_invites  TeamInvite[] @relation("InviteSentBy")
+  teams_created Team[]       @relation("TeamCreatedBy")
+  chat_conversations ChatConversation[]
+
+  @@map("profiles")
+}
+
+model BillingEvent {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  stripe_event_id String   @unique
+  event_type      String
+  status          String   @default("processed")
+  payload         Json
+  processed_at    DateTime @default(now()) @db.Timestamptz(6)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("billing_events")
+}
+
+model Team {
+  id           String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String
+  description  String?
+  icon         String?
+  color        String?
+  created_by   String?      @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime     @default(now()) @db.Timestamptz(6)
+  creator      Profile?     @relation("TeamCreatedBy", fields: [created_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  folders      Folder[]
+  papers       Paper[]
+  chat_conversations ChatConversation[]
+  team_invites TeamInvite[]
+  team_members TeamMember[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  team_id   String   @db.Uuid
+  user_id   String   @db.Uuid
+  role      TeamRole @default(viewer)
+  joined_at DateTime @default(now()) @db.Timestamptz(6)
+  team      Team     @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([team_id, user_id])
+  @@map("team_members")
+}
+
+model TeamInvite {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  team_id            String   @db.Uuid
+  email              String
+  role               TeamRole @default(viewer)
+  invited_by         String?  @db.Uuid
+  status             String   @default("pending")
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  expires_at         DateTime @default(dbgenerated("(now() + '7 days'::interval)")) @db.Timestamptz(6)
+  invited_by_profile Profile? @relation("InviteSentBy", fields: [invited_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  team               Team     @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([team_id, email])
+  @@map("team_invites")
+}
+
+model Folder {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id       String        @db.Uuid
+  team_id       String?       @db.Uuid
+  parent_id     String?       @db.Uuid
+  name          String
+  icon          String?
+  color         String?
+  position      Int           @default(0)
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @db.Timestamptz(6)
+  user          Profile       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  team          Team?         @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parent        Folder?       @relation("FolderTree", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  children      Folder[]      @relation("FolderTree")
+  paper_folders PaperFolder[]
+
+  @@map("folders")
+}
+
+model Paper {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id       String        @db.Uuid
+  team_id       String?       @db.Uuid
+  title         String
+  authors       String[]      @default([])
+  year          Int?
+  abstract      String?
+  paper_type    String        @default("article")
+  doi           String?
+  url           String?
+  metadata      Json          @default("{}")
+  embedding     Unsupported("vector(3072)")?
+  is_favorite   Boolean       @default(false)
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @db.Timestamptz(6)
+  user          Profile       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  team          Team?         @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  notes         Note[]
+  paper_files   PaperFile[]
+  paper_folders PaperFolder[]
+  paper_tags    PaperTag[]
+
+  @@index([user_id], map: "papers_user_idx")
+  @@map("papers")
+}
+
+model PaperFolder {
+  paper_id  String   @db.Uuid
+  folder_id String   @db.Uuid
+  added_at  DateTime @default(now()) @db.Timestamptz(6)
+  folder    Folder   @relation(fields: [folder_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  paper     Paper    @relation(fields: [paper_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([paper_id, folder_id])
+  @@map("paper_folders")
+}
+
+model PaperFile {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  paper_id   String   @unique(map: "paper_files_paper_id_unique_idx") @db.Uuid
+  file_name  String
+  file_path  String
+  file_size  BigInt
+  mime_type  String   @default("application/pdf")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  paper      Paper    @relation(fields: [paper_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("paper_files")
+}
+
+model Note {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  paper_id   String   @db.Uuid
+  user_id    String   @db.Uuid
+  title      String?
+  content    String   @default("")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  paper      Paper    @relation(fields: [paper_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user       Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("notes")
+}
+
+model Tag {
+  id         String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String     @db.Uuid
+  name       String
+  color      String?
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  user       Profile    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  paper_tags PaperTag[]
+
+  @@unique([user_id, name])
+  @@map("tags")
+}
+
+model PaperTag {
+  paper_id String @db.Uuid
+  tag_id   String @db.Uuid
+  paper    Paper  @relation(fields: [paper_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tag      Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([paper_id, tag_id])
+  @@map("paper_tags")
+}
+
+model ChatConversation {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String        @db.Uuid
+  team_id            String?       @db.Uuid
+  title              String        @default("New conversation")
+  model              String        @default("gpt-4o-mini")
+  selected_folder_ids String[]      @default([]) @db.Uuid
+  selected_paper_ids String[]       @default([]) @db.Uuid
+  created_at         DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime      @default(now()) @db.Timestamptz(6)
+  last_message_at    DateTime      @default(now()) @db.Timestamptz(6)
+  user               Profile       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  team               Team?         @relation(fields: [team_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  messages           ChatMessage[]
+
+  @@index([user_id, last_message_at(sort: Desc)], map: "chat_conversations_user_last_message_idx")
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversation_id String            @db.Uuid
+  role            String
+  content         String
+  sources         Json              @default("[]")
+  token_usage     Json              @default("{}")
+  model           String?
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  conversation    ChatConversation  @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([conversation_id, created_at], map: "chat_messages_conversation_created_idx")
+  @@map("chat_messages")
+}
